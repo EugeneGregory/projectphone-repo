@@ -12,29 +12,29 @@ typedef enum {
 
 /* Unified structure describing a system dependency */
 typedef struct {
-    const char *visible_name;   /* Clean name for UI display */
-    const char *package_name;   /* Package name for apt install / purge */
-    const char *check_command;  /* Executable checked via 'which' */
-    DependencyType type;        /* Category group */
+    const char *visible_name; /* Clean name for UI display */
+    const char *package_name; /* Package name for apt install / purge */
+    const char *check_command; /* Executable checked via 'which' */
+    DependencyType type; /* Category group */
 } SystemDependency;
 
 /* Unified registry of all external system tools */
 static const SystemDependency SYSTEM_DEPS[] = {
     /* iOS Components (Apple) */
-    {" • libimobiledevice (Основная связь)", "libimobiledevice-utils", "ideviceinfo", DEP_TYPE_IOS},
-    {" • ifuse (Доступ к файловой системе)", "ifuse", "ifuse", DEP_TYPE_IOS},
-    {" • idevicebackup2 (Резервное копирование)", "idevicebackup2", "idevicebackup2", DEP_TYPE_IOS},
-    {" • UxPlay (Зеркалирование экрана AirPlay)", "uxplay", "uxplay", DEP_TYPE_IOS},
+    {" • libimobiledevice (Core Communication)", "libimobiledevice-utils", "ideviceinfo", DEP_TYPE_IOS},
+    {" • ifuse (Filesystem Access)", "ifuse", "ifuse", DEP_TYPE_IOS},
+    {" • idevicebackup2 (Backup Utilities)", "idevicebackup2", "idevicebackup2", DEP_TYPE_IOS},
+    {" • UxPlay (AirPlay Screen Mirroring)", "uxplay", "uxplay", DEP_TYPE_IOS},
 
     /* Android Components */
-    {" • adb (Драйвер отладки и связи)", "adb", "adb", DEP_TYPE_ANDROID},
-    {" • jmtpfs (Доступ к файловой системе MTP)", "jmtpfs", "jmtpfs", DEP_TYPE_ANDROID},
-    {" • go-mtpfs (Альтернативный быстрый доступ к файлам)", "go-mtpfs", "go-mtpfs", DEP_TYPE_ANDROID},
-    {" • scrcpy (Зеркалирование экрана)", "scrcpy", "scrcpy", DEP_TYPE_ANDROID},
+    {" • adb (Bridge and Debugging Driver)", "adb", "adb", DEP_TYPE_ANDROID},
+    {" • jmtpfs (MTP Filesystem Access)", "jmtpfs", "jmtpfs", DEP_TYPE_ANDROID},
+    {" • go-mtpfs (Alternative Fast File Access)", "go-mtpfs", "go-mtpfs", DEP_TYPE_ANDROID},
+    {" • scrcpy (Screen Mirroring Tools)", "scrcpy", "scrcpy", DEP_TYPE_ANDROID},
 
     /* Common System Components */
-    {" • SQLite3 (Локальная база данных)", "sqlite3", "sqlite3", DEP_TYPE_COMMON},
-    {" • LibCurl (Сетевой движок и облако)", "curl", "curl", DEP_TYPE_COMMON}
+    {" • SQLite3 (Local Database Storage)", "sqlite3", "sqlite3", DEP_TYPE_COMMON},
+    {" • LibCurl (Network Engine and Cloud)", "curl", "curl", DEP_TYPE_COMMON}
 };
 
 /* Macro to automatically calculate total dependencies count */

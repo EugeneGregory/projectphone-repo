@@ -1,84 +1,109 @@
+#include <gtk/gtk.h>
 #include "ui.h"
 #include "dependencies.h"
 
-/* Static references needed for the automated refresh loop */
-extern GtkWidget *global_ios_box;
-extern GtkWidget *global_android_box;
-extern GtkWidget *global_common_box;
+GtkWidget *create_dependency_row_widget(const SystemDependency *dep);
 
-/* 
- * Automatically triggers UI redraws for all three dependency container sections
- * after any package modification process terminates in the shell.
- */
-void refresh_dependencies_window(void) {
-    g_print("[System]: Triggering automated dependencies list redraw...\n");
-    
-    if (global_ios_box && global_android_box && global_common_box) {
-        GtkWidget *child;
+static void on_group_action_clicked(GtkButton *btn, gpointer user_data) {
+    (void)btn;
+    long combo = (long)user_data;
+    int is_install = combo & 1;
+    DependencyType target_type = (DependencyType)(combo >> 1);
 
-        /* Rebuild iOS section */
-        child = gtk_widget_get_first_child(global_ios_box);
-        while (child != NULL) {
-            GtkWidget *next = gtk_widget_get_next_sibling(child);
-            gtk_box_remove(GTK_BOX(global_ios_box), child);
-            child = next;
-        }
-        for (int i = 0; i < DEPS_COUNT; i++) {
-            if (SYSTEM_DEPS[i].type == DEP_TYPE_IOS) {
-                add_dependency_row(global_ios_box, &SYSTEM_DEPS[i]);
-            }
-        }
-
-        /* Rebuild Android section */
-        child = gtk_widget_get_first_child(global_android_box);
-        while (child != NULL) {
-            GtkWidget *next = gtk_widget_get_next_sibling(child);
-            gtk_box_remove(GTK_BOX(global_android_box), child);
-            child = next;
-        }
-        for (int i = 0; i < DEPS_COUNT; i++) {
-            if (SYSTEM_DEPS[i].type == DEP_TYPE_ANDROID) {
-                add_dependency_row(global_android_box, &SYSTEM_DEPS[i]);
-            }
-        }
-
-        /* Rebuild Common section */
-        child = gtk_widget_get_first_child(global_common_box);
-        while (child != NULL) {
-            GtkWidget *next = gtk_widget_get_next_sibling(child);
-            gtk_box_remove(GTK_BOX(global_common_box), child);
-            child = next;
-        }
-        for (int i = 0; i < DEPS_COUNT; i++) {
-            if (SYSTEM_DEPS[i].type == DEP_TYPE_COMMON) {
-                add_dependency_row(global_common_box, &SYSTEM_DEPS[i]);
-            }
+    /* Allocate proper character arrays for command string accumulation */
+    char packages[512] = {0};
+    for (size_t i = 0; i < DEPS_COUNT; i++) {
+        if (SYSTEM_DEPS[i].type == target_type) {
+            strcat(packages, SYSTEM_DEPS[i].package_name);
+            strcat(packages, " ");
         }
     }
+
+    char command[1024] = {0};
+    if (is_install) {
+        snprintf(command, sizeof(command),
+                 "gnome-terminal -- bash -c 'echo \"[ProjectPhone] Installing selected ecosystem group...\"; "
+                 "sudo apt update && sudo apt install -y %s; read'", packages);
+    } else {
+        snprintf(command, sizeof(command),
+                 "gnome-terminal -- bash -c 'echo \"[ProjectPhone] Purging selected ecosystem group...\"; "
+                 "sudo apt purge -y %s && sudo apt autoremove -y; read'", packages);
+    }
+    int ret = system(command);
+    (void)ret;
 }
 
-/* Helper to build a clean category header with bulk action triggers */
-GtkWidget *create_category_header(const char *title, DependencyType type) {
-    GtkWidget *header_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-    gtk_widget_set_margin_bottom(header_box, 10);
-    
-    GtkWidget *lbl_title = gtk_label_new(title);
-    gtk_widget_set_halign(lbl_title, GTK_ALIGN_START);
-    gtk_widget_set_hexpand(lbl_title, TRUE);
-    
+static void render_section_header_with_actions(GtkWidget *box, const char *title, int dep_type) {
+    GtkWidget *header_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    gtk_widget_set_margin_top(header_hbox, 14);
+    gtk_widget_set_margin_bottom(header_hbox, 6);
+    gtk_box_append(GTK_BOX(box), header_hbox);
+
+    GtkWidget *lbl = gtk_label_new(title);
+    gtk_widget_set_halign(lbl, GTK_ALIGN_START);
+    gtk_widget_set_hexpand(lbl, TRUE);
     PangoAttrList *attrs = pango_attr_list_new();
     pango_attr_list_insert(attrs, pango_attr_weight_new(PANGO_WEIGHT_BOLD));
-    gtk_label_set_attributes(GTK_LABEL(lbl_title), attrs);
+    gtk_label_set_attributes(GTK_LABEL(lbl), attrs);
     pango_attr_list_unref(attrs);
-    gtk_box_append(GTK_BOX(header_box), lbl_title);
-    
-    GtkWidget *btn_in = gtk_button_new_with_label("📥 Install All");
-    g_signal_connect(btn_in, "clicked", G_CALLBACK(on_bulk_action), GINT_TO_POINTER((type << 16) | 1));
-    gtk_box_append(GTK_BOX(header_box), btn_in);
-    
-    GtkWidget *btn_out = gtk_button_new_with_label("🗑️ Remove All");
-    g_signal_connect(btn_out, "clicked", G_CALLBACK(on_bulk_action), GINT_TO_POINTER((type << 16) | 2));
-    gtk_box_append(GTK_BOX(header_box), btn_out);
-    
-    return header_box;
+    gtk_box_append(GTK_BOX(header_hbox), lbl);
+
+    GtkWidget *btn_ins = gtk_button_new_with_label("📥 Install All");
+    long ins_data = (dep_type << 1) | 1;
+    g_signal_connect(btn_ins, "clicked", G_CALLBACK(on_group_action_clicked), (gpointer)ins_data);
+    gtk_box_append(GTK_BOX(header_hbox), btn_ins);
+
+    GtkWidget *btn_del = gtk_button_new_with_label("🗑️ Remove All");
+    long del_data = (dep_type << 1) | 0;
+    g_signal_connect(btn_del, "clicked", G_CALLBACK(on_group_action_clicked), (gpointer)del_data);
+    gtk_box_append(GTK_BOX(header_hbox), btn_del);
+}
+
+void refresh_dependencies_window(void) {}
+
+GtkWidget *build_categorized_dependencies_list(void) {
+    GtkWidget *main_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+
+    /* --- SECTION 1: iOS Components --- */
+    render_section_header_with_actions(main_vbox, "🍏 iOS Components (Apple)", DEP_TYPE_IOS);
+    GtkWidget *list_ios = gtk_list_box_new();
+    gtk_list_box_set_selection_mode(GTK_LIST_BOX(list_ios), GTK_SELECTION_NONE);
+    gtk_box_append(GTK_BOX(main_vbox), list_ios);
+    for (size_t i = 0; i < DEPS_COUNT; i++) {
+        if (SYSTEM_DEPS[i].type == DEP_TYPE_IOS) {
+            gtk_list_box_append(GTK_LIST_BOX(list_ios), create_dependency_row_widget(&SYSTEM_DEPS[i]));
+        }
+    }
+
+    GtkWidget *sep1 = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_widget_set_margin_top(sep1, 10);
+    gtk_box_append(GTK_BOX(main_vbox), sep1);
+
+    /* --- SECTION 2: Android Components --- */
+    render_section_header_with_actions(main_vbox, "🤖 Android Components", DEP_TYPE_ANDROID);
+    GtkWidget *list_and = gtk_list_box_new();
+    gtk_list_box_set_selection_mode(GTK_LIST_BOX(list_and), GTK_SELECTION_NONE);
+    gtk_box_append(GTK_BOX(main_vbox), list_and);
+    for (size_t i = 0; i < DEPS_COUNT; i++) {
+        if (SYSTEM_DEPS[i].type == DEP_TYPE_ANDROID) {
+            gtk_list_box_append(GTK_LIST_BOX(list_and), create_dependency_row_widget(&SYSTEM_DEPS[i]));
+        }
+    }
+
+    GtkWidget *sep2 = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_widget_set_margin_top(sep2, 10);
+    gtk_box_append(GTK_BOX(main_vbox), sep2);
+
+    /* --- SECTION 3: Common Systems --- */
+    render_section_header_with_actions(main_vbox, "⚙️ Common System Components", DEP_TYPE_COMMON);
+    GtkWidget *list_com = gtk_list_box_new();
+    gtk_list_box_set_selection_mode(GTK_LIST_BOX(list_com), GTK_SELECTION_NONE);
+    gtk_box_append(GTK_BOX(main_vbox), list_com);
+    for (size_t i = 0; i < DEPS_COUNT; i++) {
+        if (SYSTEM_DEPS[i].type == DEP_TYPE_COMMON) {
+            gtk_list_box_append(GTK_LIST_BOX(list_com), create_dependency_row_widget(&SYSTEM_DEPS[i]));
+        }
+    }
+
+    return main_vbox;
 }

@@ -41,3 +41,19 @@ All notable changes to **ProjectPhone** will be documented in this file.
 ### Fixed
 * **Safe Bulk Memory Buffers:** Replaced the unsafe raw string literal allocation with a proper zero-initialized character array (`char pkg_list = {0}`) to prevent random memory corruption or segmentation faults during `strcat` operations.
 * **Compiler Warning Silence:** Expanded the execution command string buffer to `8192` bytes inside bulk callback handlers, completely eliminating `gcc` compile-time `-Wformat-truncation` diagnostic alerts.
+
+## [0.4.0-alpha] - 2026-06-09
+
+### Added
+* **Dynamic Device Dashboard:** Replaced the empty right-side static placeholder label with a live hardware telemetry information hub.
+* **Multi-Page Tab Interface:** Integrated a `GtkNotebook` container creating four independent workspaces: *About*, *Photos & Videos*, *Applications*, and *Files*.
+* **Deep Memory Categorization:** Added a hierarchical breakdown tree beneath the main storage progress bar, listing dedicated sizes for *System Memory*, *Applications Size*, and *Media and Photos*.
+* **Hardware Serial Masking:** Implemented a security masking pipeline for sensitive serial keys (UDID/ADB Serial) utilizing bullet points (`•`) by default.
+* **Interactive Privacy Toggle:** Appended an interactive `👁️ Show` / `🔒 Hide` button adjacent to the serial field to safely toggle raw hardware keys visibility.
+* **Targeted Pipeline Execution:** Optimised the background 1Hz USB polling tracking loop (`ui_usb_timer.c`) to trigger intensive subprocess data extraction strictly on physical connection events, saving CPU cycles.
+
+### Fixed
+* **Monolithic Dashboard Decoupling:** Split the expanding dashboard interface into granular, atomic modules: `ui_dashboard_tabs.c` (tab layouts) and `ui_dashboard_update.c` (data presentation logic).
+* **Cyrillic Technical Debt:** Completely purged hidden Cyrillic notes inside the global `SYSTEM_DEPS` registry array allocation, achieving international code compliance.
+* **GTK Widget Re-parenting Errors:** Fixed a critical UI layout crash by removing a double-rendering bug inside the custom tab generator utility.
+* **Compiler Warning Elimination:** Fixed all hidden `-Wsign-compare` and `-Wunused-parameter` diagnostic alerts by switching loop iterators to unified `size_t` and introducing explicit generic argument suppression.
