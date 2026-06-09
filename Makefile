@@ -1,10 +1,19 @@
 CC = gcc
-CFLAGS = $(shell pkg-config --cflags gtk4)
-LIBS = $(shell pkg-config --libs gtk4)
+CFLAGS = $(shell pkg-config --cflags gtk4) -Isrc -Isrc/core -Isrc/ui
+LIBS = $(shell pkg-config --libs gtk4) -lsqlite3
 TARGET = projectphone
 
-# Пути к файлам репозитория ведут в подпапку src/
-SRCS = src/main.c src/ui.c src/ui_ios.c src/ui_android.c src/ui_common.c
+# Beautiful and clean structural file tree
+SRCS = src/main.c \
+       src/ui/ui.c \
+       src/ui/ui_usb_timer.c \
+       src/ui/ui_dependencies.c \
+       src/ui/ui_dependencies_row.c \
+       src/ui/ui_dependencies_sections.c \
+       src/ui/ui_dependencies_callbacks.c \
+       src/core/dependencies.c \
+       src/core/usb_detector.c \
+       src/core/database.c
 
 all: $(TARGET)
 

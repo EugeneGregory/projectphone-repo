@@ -29,3 +29,15 @@ All notable changes to **ProjectPhone** will be documented in this file.
 ### Fixed
 * **Sidebar Device Rendering:** Completely refactored the left panel (`ui.c`). Added full container widget tree cleanup before redrawing to fix the critical device duplication bug.
 * **Memory Optimization:** Stopped memory bloat inside GTK4 loops when dynamically refreshing the connected devices list.
+
+## [0.3.0-alpha] - 2026-06-09
+
+### Added
+* **Data-Driven Dependency Architecture:** Completely eliminated copy-paste duplication by replacing 3 loose window files with a unified static registry array (`SystemDependency`).
+* **Strict Terminology Shift:** Renamed the ambiguous "Plugins" subsystem to "Dependencies Management" to accurately reflect system-level `apt` package interactions.
+* **Granular Directory Structure:** Decoupled the monolithic layout into a professional file tree inside `src/`, separating core backend logic (`src/core/`) from independent GTK4 graphic modules (`src/ui/`).
+* **Full English UI Localization:** Removed all remaining Cyrillic strings from the interface layout, making the desktop environment fully compliant with international open-source repository standards.
+
+### Fixed
+* **Safe Bulk Memory Buffers:** Replaced the unsafe raw string literal allocation with a proper zero-initialized character array (`char pkg_list = {0}`) to prevent random memory corruption or segmentation faults during `strcat` operations.
+* **Compiler Warning Silence:** Expanded the execution command string buffer to `8192` bytes inside bulk callback handlers, completely eliminating `gcc` compile-time `-Wformat-truncation` diagnostic alerts.

@@ -1,21 +1,17 @@
 #include <gtk/gtk.h>
 #include <stdio.h>
+#include "ui.h"
+#include "database.h"
 
-void build_ui(GtkApplication *app);
-int init_database();
-
+/* Triggered when the GtkApplication signals an active launch runtime environment status */
 static void activate(GtkApplication *app, gpointer user_data) {
     build_ui(app);
 }
 
 int main(int argc, char **argv) {
-    printf("=========================================\n");
-    printf("        PROJECTPHONE v0.1 (Alpha)        \n");
-    printf("=========================================\n");
-    
-    // Инициализируем SQLite3
+    /* Initialize local SQLite3 database file storage tables */
     if (!init_database()) {
-        fprintf(stderr, "[Критическая ошибка]: Программа остановлена. Ошибка БД.\n");
+        fprintf(stderr, "[Critical Error]: Database initialization failure.\n");
         return 1;
     }
 
