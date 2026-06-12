@@ -1,7 +1,21 @@
 #include "ui_dashboard.h"
+#include "../media/ui_media_tabs.h"
+#include "../media/media_scanner.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <glib.h>
+
+/* Access global handles initialized in ui_dashboard_tabs.c */
+extern GtkWidget *media_tab_vbox;
+extern MediaRegistry global_media_registry;
+
+/* Structure to safely pass multiple parameters to the background worker thread */
+typedef struct {
+    bool is_ios;
+    char target_path[1024];
+    char udid[128];
+} BackgroundScanArgs;
 
 void refresh_serial_display(void) {
     if (!lbl_serial || strlen(raw_serial_backup) == 0) return;
@@ -18,6 +32,46 @@ void refresh_serial_display(void) {
     }
 }
 
+/* Thread-safe wrapper callback invoked by the main GTK main loop context */
+static gboolean ui_idle_refresh_callback(gpointer data) {
+    BackgroundScanArgs *args = (BackgroundScanArgs *)data;
+    if (media_tab_vbox && args) {
+        ui_media_tabs_update(media_tab_vbox, &global_media_registry, args->target_path);
+    }
+    g_free(args);
+    return G_SOURCE_REMOVE;
+}
+
+/* Background worker thread function to prevent GTK main loop deadlocks */
+static gpointer bg_media_scan_worker(gpointer data) {
+    BackgroundScanArgs *args = (BackgroundScanArgs *)data;
+    if (!args) return NULL;
+
+    char mount_cmd[2048] = {0};
+
+    if (args->is_ios) {
+        /* Force clean any stuck previous mounts from our explicit private directory */
+        snprintf(mount_cmd, sizeof(mount_cmd), "fusermount3 -uz %s 2>/dev/null", args->target_path);
+        system(mount_cmd);
+
+        /* Target exact device context utilizing gathered hardware serial tokens */
+        snprintf(mount_cmd, sizeof(mount_cmd), "ifuse -u %s %s 2>/dev/null", args->udid, args->target_path);
+        system(mount_cmd);
+    } else {
+        // Android MTP mounting pipeline via go-mtpfs/jmtpfs will be triggered here
+    }
+
+    /* Perform the heavy disk recursive scan inside our newly bound custom mount path */
+    if (!global_media_registry.is_scanned) {
+        media_scanner_run(args->target_path, &global_media_registry);
+    }
+
+    /* Safely request UI updates via idle handler mechanism to ensure thread safety */
+    g_idle_add(ui_idle_refresh_callback, args);
+
+    return NULL;
+}
+
 void update_device_dashboard(const DeviceInfo *info) {
     if (!lbl_model) return;
     if (!info) {
@@ -25,6 +79,16 @@ void update_device_dashboard(const DeviceInfo *info) {
         gtk_widget_set_visible(grid_data, FALSE);
         gtk_widget_set_visible(box_storage, FALSE);
         memset(raw_serial_backup, 0, sizeof(raw_serial_backup));
+        
+        /* Force clean unmount on disconnection to release our private media folder */
+        system("fusermount3 -uz /home/eugene254/.projectphone/mnt_ios 2>/dev/null");
+        system("fusermount3 -uz /home/eugene254/.projectphone/mnt_android 2>/dev/null");
+
+        /* Reset media engine and UI containers upon disconnect */
+        media_scanner_reset(&global_media_registry);
+        if (media_tab_vbox) {
+            ui_media_tabs_update(media_tab_vbox, &global_media_registry, NULL);
+        }
         return;
     }
 
@@ -57,5 +121,21 @@ void update_device_dashboard(const DeviceInfo *info) {
     } else {
         gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_storage), 0.0);
         gtk_label_set_text(GTK_LABEL(lbl_storage_text), "Storage metrics unavailable.");
+    }
+
+    /* Spawn an asynchronous worker thread to read our private custom mount target path */
+    if (media_tab_vbox) {
+        BackgroundScanArgs *args = g_new0(BackgroundScanArgs, 1);
+        args->is_ios = info->is_ios;
+        strncpy(args->udid, info->serial_number, sizeof(args->udid) - 1);
+        
+        if (info->is_ios) {
+            strncpy(args->target_path, "/home/eugene254/.projectphone/mnt_ios", sizeof(args->target_path) - 1);
+        } else {
+            strncpy(args->target_path, "/home/eugene254/.projectphone/mnt_android", sizeof(args->target_path) - 1);
+        }
+
+        /* Dispatch background processing thread */
+        g_thread_new("media_scan_thread", bg_media_scan_worker, args);
     }
 }

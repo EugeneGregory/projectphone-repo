@@ -1,9 +1,15 @@
 #include "ui_dashboard.h"
+#include "../media/ui_media_tabs.h"
 #include <string.h>
 
 GtkWidget *lbl_model = NULL, *lbl_os = NULL, *lbl_battery = NULL, *lbl_serial = NULL, *btn_serial_toggle = NULL;
 GtkWidget *lbl_storage_text = NULL, *progress_storage = NULL, *grid_data = NULL, *box_storage = NULL;
 GtkWidget *lbl_cat_system = NULL, *lbl_cat_apps = NULL, *lbl_cat_media = NULL;
+
+/* Global handle for the media tab container and its registry backend */
+GtkWidget *media_tab_vbox = NULL;
+MediaRegistry global_media_registry;
+
 char raw_serial_backup[64] = {0};
 bool is_serial_masked = true;
 
@@ -73,7 +79,12 @@ GtkWidget *create_device_dashboard(void) {
 
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox_about, gtk_label_new("About"));
 
-    /* --- PAGES 2, 3, 4: Clean Isolated Tab Layouts --- */
+    /* --- PAGE 2: Advanced Dynamic Media Tab Component --- */
+    memset(&global_media_registry, 0, sizeof(MediaRegistry));
+    media_tab_vbox = ui_media_tabs_create(&global_media_registry);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), media_tab_vbox, gtk_label_new("Photos & Videos"));
+
+    /* --- PAGES 3, 4: Clean Isolated Tab Layouts --- */
     void add_tab(const char *title, const char *msg) {
         GtkWidget *v = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
         gtk_widget_set_margin_start(v, 25); gtk_widget_set_margin_top(v, 25);
@@ -81,7 +92,6 @@ GtkWidget *create_device_dashboard(void) {
         gtk_box_append(GTK_BOX(v), l);
         gtk_notebook_append_page(GTK_NOTEBOOK(notebook), v, gtk_label_new(title));
     }
-    add_tab("Photos & Videos", "📸 Photos and Videos management module coming soon.");
     add_tab("Applications", "📦 Installed user applications catalog ledger pipeline coming soon.");
     add_tab("Files", "📁 Shared system storage shared partition file-tree explorer coming soon.");
 

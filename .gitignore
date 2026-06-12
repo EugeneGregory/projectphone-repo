@@ -1,11 +1,16 @@
-# Прячем секретные бэкапы
+# Hide secret hardware backups
 backups/
 *.tar.gz
 
-# Прячем локальную базу данных устройств
+# Hide local device database
 *.db
 projectphone.db
 
-# Прячем скомпилированную программу и объектные файлы
+# Hide compiled executable and object files
 projectphone
 *.o
+
+# Ignore local private device mount points and cache profiles
+.projectphone/
+mnt_ios/
+mnt_android/

@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Wformat-truncation=0 `pkg-config --cflags gtk4` -Isrc -Isrc/core -Isrc/ui
+CFLAGS = -Wall -Wextra -Wformat-truncation=0 `pkg-config --cflags gtk4` -Isrc -Isrc/core -Isrc/ui -Isrc/media
 LIBS = `pkg-config --libs gtk4` -lsqlite3
 
 # Target executable name
@@ -11,6 +11,9 @@ SRCS = src/main.c \
        src/core/dependencies.c \
        src/core/usb_detector.c \
        src/core/device_info.c \
+       src/media/media_scanner.c \
+       src/media/ui_media_grid.c \
+       src/media/ui_media_tabs.c \
        src/ui/ui.c \
        src/ui/ui_dependencies.c \
        src/ui/ui_dependencies_callbacks.c \
