@@ -57,3 +57,19 @@ All notable changes to **ProjectPhone** will be documented in this file.
 * **Cyrillic Technical Debt:** Completely purged hidden Cyrillic notes inside the global `SYSTEM_DEPS` registry array allocation, achieving international code compliance.
 * **GTK Widget Re-parenting Errors:** Fixed a critical UI layout crash by removing a double-rendering bug inside the custom tab generator utility.
 * **Compiler Warning Elimination:** Fixed all hidden `-Wsign-compare` and `-Wunused-parameter` diagnostic alerts by switching loop iterators to unified `size_t` and introducing explicit generic argument suppression.
+
+## [0.4.0.5-alpha] - 2026-06-11
+
+### Added
+* **Asynchronous GLib Threading Pipeline:** Completely decoupled the blocking filesystem recursive scanner and `ifuse` storage mounting pipeline from the main GTK4 layout context via `g_thread_new`, completely eliminating desktop freezing and "Force Quit" exceptions.
+* **Thread-Safe UI Dispatcher:** Integrated a non-blocking main loop event synchronizer utilizing `g_idle_add` to safely push cross-thread memory buffers into graphic widgets only after background worker execution terminates.
+* **Dynamic Media Tile Grid Layout:** Replaced the empty workspace with an adaptive, scrollable plitka system using `GtkFlowBox` wrapped inside a `GtkScrolledWindow`, strictly enforcing a clean horizontal boundary of exactly 3 folder buttons per line.
+* **Interactive Path Tooltips:** Appended native `GtkBox` tooltip attributes (`gtk_widget_set_tooltip_text`) to folder buttons, moving heavy, multi-layered Apple physical directory paths inside floating preview overlays to maintain UI design cleanliness.
+* **Two-Way Virtual File Browser:** Implemented a granular folder selection handler that hides the parent grid container and inflates a flat file row list context (`📄 IMG_xxxx.PNG`) capped at 150 items to prevent rendering lag, including a functional `GtkButton` callback to route back to root workspace.
+* **Background Bulk Downloader Tool:** Integrated an asynchronous execution bridge connected to a large action button (`📥 Download All Files`) that dispatches a non-blocking `cp -r` system subprocess, copying live device media streams directly into local machine target trees without a single layout frame freeze.
+
+### Fixed
+* **Stack Smashing Memory Defect:** Replaced the highly unstable single character definitions (`char mount_cmd`) with rigid zero-initialized character arrays (`char mount_cmd` / `char full_mount_path`), permanently curing data corruption, thread segmentation faults, and stack smash warnings during execution formatting.
+* **Apple Virtual Storage Bypass:** Completely purged the restrictive `stat()` checks and POSIX `d_type` constraints that natively reported empty folder trees on FUSE/ifuse points, switching the inner tracking mechanism to a robust recursive `opendir` / `readdir` extension parsing lookup loop.
+* **Anti-Recursion iOS Guard Barrier:** Engineered an strict hardware token filter loop inside directory scanning loops to detect and automatically drop heavy circular symlink pointers (`PhotoData`, `CPLAssets`, `Thumbnails`), breaking infinite loops inside clean device environments.
+* **Cross-Repository Path Subversion:** Completely audited all inner `cat` pipeline injection routines, permanently redirecting broken `projectphone-repo` directory arguments back to the active execution sandbox workspace (`projectphone`).
